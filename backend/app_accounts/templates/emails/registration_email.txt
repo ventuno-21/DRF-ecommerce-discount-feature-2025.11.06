@@ -1,0 +1,8 @@
+Hi {{ user.email }},
+
+Welcome to Afagh Store! 🎉
+Your registration was successful.
+
+Thank you for joining us!
+
+ Afagh Team

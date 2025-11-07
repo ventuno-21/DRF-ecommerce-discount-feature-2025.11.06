@@ -174,3 +174,5 @@ cython_debug/
 ### dotenv ###
 
 # End of https://www.toptal.com/developers/gitignore/api/django,dotenv
+
+notes.txt

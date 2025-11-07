@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
-from utils.logger import logger
+
 from dotenv import load_dotenv
+
+from utils.logger import logger
 
 load_dotenv()  # this will automatically read your .env file
 
@@ -45,8 +48,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party apps
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
     # Internal apps
     "app_accounts.apps.AppAccountsConfig",
+    "app_api",
+    "app_orders",
+    "app_products",
+    "app_cart",
 ]
 
 MIDDLEWARE = [
@@ -134,3 +144,60 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "app_accounts.User"
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=21),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "no-reply@example.com"
+
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "you@example.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "password")
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@example.com")
+
+
+PASSWORD_RESET_TOKEN_EXP_HOURS = 1
+FRONTEND_URL = "https://frontend.com"
+
+
+# Broker (Redis)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+
+# Optional: result backend, the second address is based on my WSL IP address
+# CELERY_RESULT_BACKEND = os.getenv(
+#     "CELERY_RESULT_BACKEND", "redis://172.25.39.92:6379/1"
+# )
+
+# Recommended: task serializer / timezone
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Afagh Nik Andishan 20",
+    "DESCRIPTION": "3rd secenario for adding discount feature for Sales Department ",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
