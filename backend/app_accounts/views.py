@@ -2,21 +2,25 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from app_accounts.models import Follow, Vendor
 from utils.logger import logger
 from utils.token import generate_password_reset_token, verify_password_reset_token
+
 from .serializers import (
+    FollowSerializer,
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
 )
 from .tasks import send_password_reset_email, send_registration_email
-from rest_framework_simplejwt.views import TokenObtainPairView
 from .token_serializers import MyTokenObtainPairSerializer
 
 User = get_user_model()
@@ -29,16 +33,12 @@ class RegisterView(APIView):
     """
 
     serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Optionally create Vendor object if is_vendor True (depends on your Vendor model)
-            # from .models import Vendor
-            # if user.is_vendor:
-            #     Vendor.objects.get_or_create(user=user, shop_name=f"{user.email.split('@')[0]}'s Shop")
 
             # send registration email via Celery
             context = {
@@ -62,7 +62,7 @@ class LoginView(APIView):
     """
 
     serializer_class = LoginSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -100,7 +100,7 @@ class PasswordResetRequestView(APIView):
     """
 
     serializer_class = PasswordResetRequestSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -135,7 +135,7 @@ class PasswordResetConfirmView(APIView):
     Confirm password reset using token issued earlier (pyjwt). Accepts password1 and password2.
     """
 
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request):
@@ -172,3 +172,55 @@ class MyTokenObtainPairView(TokenObtainPairView):
     """
 
     serializer_class = MyTokenObtainPairSerializer
+
+
+class FollowVendorAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowSerializer
+
+    def post(self, request, vendor_id):
+        """
+        Follow a vendor. If already following, return 400.
+        """
+        user = request.user
+        try:
+            vendor = Vendor.objects.get(id=vendor_id)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"detail": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if Follow.objects.filter(user=user, vendor=vendor).exists():
+            return Response(
+                {"detail": "Already following this vendor."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        follow = Follow.objects.create(user=user, vendor=vendor)
+        serializer = FollowSerializer(follow)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, vendor_id):
+        """
+        Unfollow a vendor.
+        """
+        user = request.user
+        try:
+            vendor = Vendor.objects.get(id=vendor_id)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"detail": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            follow = Follow.objects.get(user=user, vendor=vendor)
+            follow.delete()
+            return Response(
+                {"detail": "Unfollowed successfully."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except Follow.DoesNotExist:
+            return Response(
+                {"detail": "You are not following this vendor."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

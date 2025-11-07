@@ -12,6 +12,7 @@ from app_accounts.views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RegisterView,
+    FollowVendorAPIView,
 )
 
 app_name = "app_api"
@@ -36,20 +37,24 @@ urlpatterns = [
         PasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
+    path(
+        "vendors/<int:vendor_id>/follow/",
+        FollowVendorAPIView.as_view(),
+        name="vendor-follow",
+    ),
     # endregion
     # ===============================
     # region drf-spectacular endpoints
     # ===============================
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
-    # path("schema/", SpectacularAPIView.as_view(), name="app_api:schema"),
     path(
         "swagger/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
+        SpectacularSwaggerView.as_view(url_name="app_api:schema"),
         name="swagger-ui",
     ),
     path(
         "redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
+        SpectacularRedocView.as_view(url_name="app_api:schema"),
         name="redoc",
     ),
     # endregion

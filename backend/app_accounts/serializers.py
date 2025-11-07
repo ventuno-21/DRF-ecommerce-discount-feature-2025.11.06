@@ -5,6 +5,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from app_accounts.models import Follow, Vendor
+
 User = get_user_model()
 
 
@@ -95,3 +97,13 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("Passwords do not match.")
         validate_password(data.get("password1"))
         return data
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    vendor_name = serializers.CharField(source="vendor.shop_name", read_only=True)
+
+    class Meta:
+        model = Follow
+        fields = ["id", "user", "user_email", "vendor", "vendor_name", "created_at"]
+        read_only_fields = fields
