@@ -71,13 +71,14 @@ class Vendor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     shop_name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True, blank=True, null=True)
     logo = models.ImageField(
         upload_to=shop_image_upload_path, default="vendor_logos/0_default_shop.jpg"
     )
     followers = models.ManyToManyField(
         User, related_name="following_vendors", blank=True
     )
+    is_active = models.BooleanField(default=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.shop_name

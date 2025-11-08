@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+from app_products.admin import VendorProductVariantInline
 from .models import User, Profile, Vendor, Follow
 
 
@@ -56,17 +58,17 @@ class ProfileAdmin(admin.ModelAdmin):
     list_select_related = ("user",)
 
 
-@admin.register(Vendor)
-class VendorAdmin(admin.ModelAdmin):
-    list_display = ("shop_name", "user", "description")
-    search_fields = ("shop_name", "user__email")
-    list_filter = ("followers",)
-    filter_horizontal = ("followers",)
-    list_select_related = ("user",)
-
-
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ("user", "vendor", "created_at")
     search_fields = ("user__email", "vendor__shop_name")
     list_select_related = ("user", "vendor")
+
+
+@admin.register(Vendor)
+class VendorAdmin(admin.ModelAdmin):
+    list_display = ("shop_name", "user", "is_active", "created_at")
+    search_fields = ("shop_name", "user__email")
+    list_filter = ("is_active",)
+    inlines = [VendorProductVariantInline]  # ← ProductVariants inline
+    list_select_related = ("user",)
