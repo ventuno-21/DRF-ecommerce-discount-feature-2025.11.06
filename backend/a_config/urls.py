@@ -18,6 +18,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -25,9 +26,15 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+
+def health_check(request):
+    return JsonResponse({"status": "healthy"})
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("app_api.urls")),
+    path("health/", health_check),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "swagger/",
