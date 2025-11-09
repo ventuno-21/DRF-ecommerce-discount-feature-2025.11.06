@@ -2,12 +2,14 @@ from django.contrib import admin
 from .models import (
     Brand,
     Category,
+    Currency,
     Product,
     Attribute,
     AttributeValue,
     ProductVariant,
     ProductImage,
     ProductVariantImage,
+    VendorProduct,
 )
 from app_accounts.models import Vendor
 
@@ -76,7 +78,15 @@ class ProductVariantVendorInline(admin.TabularInline):
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
-    fields = ("vendor", "price", "stock", "attributes", "sku", "is_active")
+    fields = (
+        "vendor",
+        "price",
+        "stock",
+        "attributes",
+        "sku",
+        "is_active",
+        "currency",
+    )
     readonly_fields = ("sku",)
     autocomplete_fields = ("vendor", "attributes")
     show_change_link = True
@@ -97,13 +107,35 @@ class ProductImageInline(admin.TabularInline):
     image_preview.short_description = "Preview"
 
 
+class VendorProductInline(admin.TabularInline):
+    model = VendorProduct
+    extra = 1
+    fields = ("vendor", "variant", "price", "stock", "is_active")
+    autocomplete_fields = ("vendor", "variant")
+    show_change_link = True
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("name", "brand", "category", "created_at")
+    list_display = (
+        "name",
+        "brand",
+        "category",
+        "created_at",
+        # "get_currencies",
+    )
     search_fields = ("name", "brand__name", "category__name")
     list_filter = ("brand", "category")
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ProductVariantInline, ProductImageInline]  # ← Variants + Images inline
+    inlines = [ProductVariantInline, ProductImageInline]
+
+    # def get_currencies(self, obj):
+    #     currencies = obj.variants.values_list(
+    #         "vendor_offers__currency__code", flat=True
+    #     ).distinct()
+    #     return ", ".join([c for c in currencies if c]) or "—"
+
+    # get_currencies.short_description = "Currencies"
 
 
 @admin.register(ProductVariant)
@@ -121,7 +153,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
     search_fields = ("product__name", "vendor__shop_name", "sku")
     autocomplete_fields = ("product", "vendor", "attributes")
     readonly_fields = ("sku",)
-    inlines = [ProductVariantImageInline]  # ← Images inline
+    inlines = [ProductVariantImageInline, VendorProductInline]
 
 
 class VendorProductVariantInline(admin.TabularInline):
@@ -134,9 +166,8 @@ class VendorProductVariantInline(admin.TabularInline):
     inlines = [ProductVariantImageInline]
 
 
-# @admin.register(Vendor)
-# class VendorAdmin(admin.ModelAdmin):
-#     list_display = ("shop_name", "user", "is_verified", "created_at")
-#     search_fields = ("shop_name", "user__email")
-#     list_filter = ("is_verified",)
-#     inlines = [VendorProductVariantInline]  # ← ProductVariants inline
+@admin.register(Currency)
+class CurrencyAdmin(admin.ModelAdmin):
+    list_display = ("code", "name", "symbol", "exchange_rate", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("code", "name")

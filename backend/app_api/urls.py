@@ -1,19 +1,21 @@
 from django.urls import path
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
+from app_products.views import (
+    ProductDetailView,
+    ProductListCreateView,
+    ProductVariantDetailView,
+    ProductVariantListCreateView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from app_accounts.views import (
+    FollowVendorAPIView,
     LoginView,
     MyTokenObtainPairView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RegisterView,
-    FollowVendorAPIView,
 )
+from app_cart.views import CartPreviewAPIView
 
 app_name = "app_api"
 
@@ -21,19 +23,21 @@ urlpatterns = [
     # ===============================
     # region app_accounts endpoints
     # ===============================
-    path("register/", RegisterView.as_view(), name="register"),
-    path("login/", LoginView.as_view(), name="login"),  # custom login returning tokens
+    path("auth/register/", RegisterView.as_view(), name="register"),
+    path(
+        "auth/login/", LoginView.as_view(), name="login"
+    ),  # custom login returning tokens
     path(
         "token/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"
     ),  # optional alternative
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path(
-        "password-reset/",
+        "auth/password-reset/",
         PasswordResetRequestView.as_view(),
         name="password_reset_request",
     ),
     path(
-        "password-reset-confirm/",
+        "auth/password-reset-confirm/",
         PasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
@@ -42,21 +46,30 @@ urlpatterns = [
         FollowVendorAPIView.as_view(),
         name="vendor-follow",
     ),
+    # ===============================
     # endregion
     # ===============================
-    # region drf-spectacular endpoints
+    # region app_product endpoints
     # ===============================
-    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("products/", ProductListCreateView.as_view(), name="product-list-create"),
+    path("products/<str:slug>/", ProductDetailView.as_view(), name="product-detail"),
     path(
-        "swagger/",
-        SpectacularSwaggerView.as_view(url_name="app_api:schema"),
-        name="swagger-ui",
+        "products/variants/",
+        ProductVariantListCreateView.as_view(),
+        name="variant-list-create",
     ),
     path(
-        "redoc/",
-        SpectacularRedocView.as_view(url_name="app_api:schema"),
-        name="redoc",
+        "products/variants/<int:pk>/",
+        ProductVariantDetailView.as_view(),
+        name="variant-detail",
     ),
+    # ===============================
+    # endregion
+    # ===============================
+    # region app_cart endpoints
+    # ===============================
+    path("cart/preview/", CartPreviewAPIView.as_view(), name="cart-preview"),
+    # ===============================
     # endregion
     # ===============================
 ]
